@@ -1,6 +1,7 @@
 module.exports = function(success, error){
   var mysql = require('mysql');
 
+  // See HEROKU variables for process.env.VARIABLES
   var connection = mysql.createConnection({
     host     : process.env.db_host,
     user     : process.env.user_name,
