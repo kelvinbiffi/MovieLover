@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html ng-app="movieLover">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" type="image/x-icon" href="images/ico.png" sizes="16x16">
+    <link rel="icon" type="image/x-icon" href="images/ico.png" sizes="16x16">
+    <link rel="apple-touch-icon-precomposed" href="images/ico.png">
+    <title>Movie Lover</title>
+    <link rel="stylesheet" href="style/style.css">
+  </head>
+  <body>
+    <!-- header -->
+    <div ng-controller="headerController" class="header">
+
+      <a class="filter fa fa-filter" aria-hidden="true" ng-click="openFilter()"></a>
+
+      <img src="images/movielover.png" alt="Movie Lover">
+
+      <a class="login fa fa-sign-in" ng-if="!login.logged" aria-hidden="true" ng-click="login.openLoginModal()"></a>
+
+      <a class="logout fa fa-sign-out" ng-if="login.logged" aria-hidden="true" ng-click="login.logout()"></a>
+    </div>
+
+    <!-- Login -->
+    <div ng-controller="loginController" class="login-modal {{ login.openModal ? 'show' : '' }}">
+      <div class="login">
+        <a class="close fa fa-times" aria-hidden="true" ng-click="login.closeLoginModal()"></a>
+        <img src="images/movielover.png" alt=""><br>
+        <input class="primary-input" type="text" id="user" value="" ng-model="data.user" placeholder="seu usuário..."><br>
+        <input class="primary-input" type="password" id="pass" value="" ng-model="data.pass" placeholder="sua senha...."><br>
+        <button class="primary-button" type="button" id="login-btn" ng-click="entrarBtn()">Entrar</button><br>
+        <a id="register-btn" ng-click="registrarBtn()">Registrar</a>
+      </div>
+    </div>
+
+    <div ng-controller="filterController" class="filter-modal {{ filterService.openFilter ? 'show' : '' }}" ng-click="hideFilter()">
+      <ul>
+        <li><a ng-click="filterBy('nome')">Nome</a></li>
+        <li><a ng-click="filterBy('ano')">Ano</a></li>
+        <li><a ng-click="filterBy('diretor')">Diretor</a></li>
+      </ul>
+    </div>
+
+    <div ng-controller="deleteMovieController" class="delete-movie-modal {{movieService.openDeleteMovie === true ? 'show' : ''}}" >
+      <div class="message-delete">
+        <p>Deseja realmente excluir o filme <b>{{ movieService.movie.nome }}?</b></p>
+        <button type="button" name="button" class="primary-button deletar" ng-click="deleteMovie()">Deletar</button>
+        <button type="button" name="button" class="primary-button cancelar" ng-click="closeModalDeleteMovie()">Cancelar</button>
+      </div>
+    </div>
+
+    <div ng-controller="movieController" class="add-movie-modal {{movieService.openAddMovie === true ? 'show' : ''}}">
+      <div class="form">
+        <a class="close fa fa-times" aria-hidden="true" ng-click="closeModalDataMovie()"></a>
+        <img class="movielover" src="images/movielover.png" alt=""><br>
+        <div class="banner">
+          <label for="img"><img src="{{movieService.movie.img}}" alt=""></label><br>
+        </div>
+        <div class="data">
+          <input class="primary-button" type="file" id="img" value="" file-read="movieService.movie.img"><br>
+          <input class="primary-input" ng-model="movieService.movie.nome" type="text" id="nome" placeholder="Nome" value=""><br>
+          <input class="primary-input" ng-model="movieService.movie.ano" type="number" id="ano" placeholder="Ano" value=""><br>
+          <select class="primary-input" ng-model="movieService.movie.categoria">
+            <option value="">Categoria</option>
+            <option ng-repeat="cat in movieService.categorias" value="{{cat.codigo}}" {{cat.codigo == movieService.movie.categoria ? "selected" : ""}}>{{cat.categoria}}</option>
+          </select><br>
+          <input class="primary-input" ng-model="movieService.movie.diretor" type="text" id="diretor" placeholder="Diretor" value=""><br>
+          <textarea class="primary-input" ng-model="movieService.movie.sinopse" id="sinopse" rows="8" cols="80" placeholder="Sinopse...."></textarea><br>
+          <button class="primary-button" type="button" name="button" ng-click="save()">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <div ng-controller="moreDetailsMovieController" class="more-movie-modal {{movieService.openMovieDetails === true ? 'show' : ''}}">
+      <div class="movie">
+        <img class="banner" src="{{ movieService.movie.img }}" alt="{{ movieService.movie.nome }}">
+        <div class="details">
+          <a class="close fa fa-times" aria-hidden="true" ng-click="closeMoreDetailsMovie()"></a>
+          <div class="movie-info">
+            <span class="nome">{{ movieService.movie.nome }}</span><br>
+            <span class="diretor">Dirigido por {{ movieService.movie.diretor }}</span><br>
+            <span class="categoria">{{ getCategoryName() }}</span>
+            <span class="fa fa-calendar" aria-hidden="true"><span class="ano">{{ movieService.movie.ano }}</span></span><br><br>
+            <p class="sinopse">{{ movieService.movie.sinopse }}</p>
+          </div>
+          <div class="movie-rate">
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="list-movies" ng-controller="listMovieController">
+      <div class="no-movies" ng-if="!movieService.hasMovies">
+        <p>Não há filmes cadastrados até o momento!</p>
+      </div>
+      <div class="movies" ng-if="movieService.hasMovies">
+        <div class="movie" ng-repeat="movie in movieService.movies | orderBy : movieService.orderMovies">
+          <img src="{{ movie.img }}" alt="movie.nome">
+          <div class="info">
+            <span class="nome">{{ movie.nome }}</span><br>
+            <span class="ano">{{ movie.ano }}</span><br>
+
+            <button type="button" name="button" ng-click="openMovieDetails(movie)" class="primary-button mais {{ login.logged ? 'action' : ''}}">mais</button>
+
+            <div ng-if="login.logged" class="actions">
+              <a class="edit" ng-click="$parent.editMovie(movie)"><span class="fa fa-pencil" aria-hidden="true"></span></a>
+              <a class="delete" ng-click="$parent.deleteMovie(movie)"><span class="fa fa-trash-o" aria-hidden="true"></span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <a ng-if="login.logged" class="add-movie fa fa-plus" ng-click="addNewMovie()" aria-hidden="true" ></a>
+    </div>
+
+    <div ng-controller="messageController" class="message {{ messageService.type }} {{ messageService.show === true ? 'show' : '' }}">
+      <p>{{messageService.message}}</p>
+    </div>
+
+    <div ng-controller="spinnerController" class="spinner {{spinnerService.displaySpinner ? 'show' : ''}}">
+      <span class="fa fa-spinner fa-pulse fa-3x fa-fw"></span>
+    </div>
+
+    <script src="js/angular.min.js"></script>
+    <script src="js/app.js"></script>
+
+    <script src="js/utils/spinnerService.js" charset="utf-8"></script>
+    <script src="js/utils/spinnerController.js" charset="utf-8"></script>
+
+    <script src="js/message/messageService.js" charset="utf-8"></script>
+    <script src="js/message/messageController.js" charset="utf-8"></script>
+
+    <script src="js/login/loginService.js" charset="utf-8"></script>
+
+    <script src="js/header/headerController.js" charset="utf-8"></script>
+
+    <script src="js/login/loginController.js" charset="utf-8"></script>
+
+    <script src="js/movie/fileRead.js"></script>
+    <script src="js/movie/movieService.js"></script>
+    <script src="js/movie/deleteMovieController.js"></script>
+    <script src="js/movie/movieController.js"></script>
+    <script src="js/movie/listMovieController.js"></script>
+    <script src="js/movie/moreDetailsMovieController.js"></script>
+
+    <script src="js/header/filterController.js"></script>
+    <script src="js/header/filterService.js"></script>
+
+
+  </body>
+</html>
